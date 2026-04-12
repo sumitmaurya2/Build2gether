@@ -2,8 +2,19 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { GoogleAuthProvider, GithubAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "firebase/auth"
 import { auth } from "../firebase"
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
+import { useEffect } from "react"
 
 export default function Login() {
+    const navigate = useNavigate()
+    const { user } = useAuth()
+
+useEffect(() => {
+  if (user) {
+    navigate("/dashboard")
+  }
+}, [user, navigate])
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -17,7 +28,7 @@ export default function Login() {
     e.preventDefault()
     try {
       const result = await signInWithEmailAndPassword(auth, formData.email, formData.password)
-      console.log(result.user)
+      navigate("/dashboard")
     } catch (error) {
       console.log(error.message)
     }
@@ -27,7 +38,7 @@ export default function Login() {
     const provider = new GoogleAuthProvider()
     try {
       const result = await signInWithPopup(auth, provider)
-      console.log(result.user)
+      navigate("/dashboard")
     } catch (error) {
       console.log(error.message)
     }
@@ -37,7 +48,7 @@ export default function Login() {
     const provider = new GithubAuthProvider()
     try {
       const result = await signInWithPopup(auth, provider)
-      console.log(result.user)
+      navigate("/dashboard")
     } catch (error) {
       console.log(error.message)
     }

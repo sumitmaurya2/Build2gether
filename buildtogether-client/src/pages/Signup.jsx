@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-
-
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
+import { useEffect } from "react"
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth"
 import { GithubAuthProvider } from "firebase/auth"
 import { auth } from "../firebase"
@@ -9,6 +10,14 @@ import { auth } from "../firebase"
 
 
 export default function Signup() {
+    const navigate = useNavigate()
+    const { user } = useAuth()
+
+useEffect(() => {
+  if (user) {
+    navigate("/dashboard")
+  }
+}, [user, navigate])
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -21,7 +30,7 @@ export default function Signup() {
 
   function handleSubmit(e) {
     e.preventDefault()
-    console.log(formData)
+    navigate("/dashboard")
   }
 
 
@@ -29,7 +38,7 @@ async function handleGoogleSignup() {
   const provider = new GoogleAuthProvider()
   try {
     const result = await signInWithPopup(auth, provider)
-    console.log(result.user)
+    navigate("/dashboard")
   } catch (error) {
     console.log(error.message)
   }
@@ -39,7 +48,7 @@ async function handleGithubSignup() {
   const provider = new GithubAuthProvider()
   try {
     const result = await signInWithPopup(auth, provider)
-    console.log(result.user)
+    navigate("/dashboard")
   } catch (error) {
     console.log(error.message)
   }
