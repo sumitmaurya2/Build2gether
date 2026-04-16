@@ -1,11 +1,21 @@
 import { Navigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { getProtectedRedirect } from "../utils/authFlow"
 
-export default function ProtectedRoute({ children }) {
-  const { user } = useAuth()
+export default function ProtectedRoute({
+  children,
+  requireProfileComplete = false,
+  requireIncompleteProfile = false,
+}) {
+  const { user, userProfile } = useAuth()
 
-  if (!user) {
-    return <Navigate to="/login" />
+  const redirectTo = getProtectedRedirect(user, userProfile, {
+    requireProfileComplete,
+    requireIncompleteProfile,
+  })
+
+  if (redirectTo) {
+    return <Navigate to={redirectTo} replace />
   }
 
   return children

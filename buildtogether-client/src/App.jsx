@@ -1,29 +1,47 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Landing from './pages/Landing'
-import Signup from './pages/Signup'
-import Login from './pages/Login'
-import ProtectedRoute from './components/ProtectedRoute'
+import { BrowserRouter, Route, Routes } from "react-router-dom"
+import ProtectedRoute from "./components/ProtectedRoute"
+import PublicOnlyRoute from "./components/PublicOnlyRoute"
+import Home from "./pages/Home"
+import Landing from "./pages/Landing"
+import Login from "./pages/Login"
+import ProfileSetup from "./pages/ProfileSetup"
+import Signup from "./pages/Signup"
+import VerifyEmail from "./pages/VerifyEmail"
+import CreateProject from './pages/CreateProject'
+
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
-        
-        <Route 
-          path="/dashboard" 
+        <Route path="/signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
+        <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute requireProfileComplete>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/create-project" element={
+  <ProtectedRoute>
+    <CreateProject />
+  </ProtectedRoute>
+    } />
+        <Route
+          path="/profile-setup"
           element={
             <ProtectedRoute>
-              <div className="min-h-screen bg-cream flex items-center justify-center text-ink font-sans">
-                Dashboard — coming soon
-              </div>
+              <ProfileSetup />
             </ProtectedRoute>
-          } 
+          }
+          
         />
-        
       </Routes>
+      
     </BrowserRouter>
   )
 }

@@ -1,2 +1,14 @@
 import { useAuth } from "../context/AuthContext"
+<<<<<<< ours
 import { useEffect } from "react"
+=======
+import { useEffect } from "react"
+server started
+npm install express mongoose dotenv cors
+npm install -D nodemon
+express — server banane ke liye
+mongoose — MongoDB se baat karne ke liye
+dotenv — .env file padhne ke liye
+cors — client aur server alag ports pe hain, communication allow karne ke liye
+nodemon — file save hone pe server auto-restart kare
+>>>>>>> theirs

@@ -1,2 +1,6 @@
 .env
 node_modules
+details
+details.txt
+buildtogether-client/node_modules
+buildtogether-client/.env
