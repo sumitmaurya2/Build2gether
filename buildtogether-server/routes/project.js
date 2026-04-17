@@ -37,4 +37,25 @@ router.get("/", async (req, res) => {
   }
 })
 
+
+// GET /api/projects/user/:firebaseUid — ek user ke saare projects
+router.get("/user/:firebaseUid", async (req, res) => {
+  try {
+    const user = await User.findOne({ firebaseUid: req.params.firebaseUid })
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+
+    const projects = await Project.find({ postedBy: user._id })
+      .sort({ createdAt: -1 })
+
+    res.status(200).json(projects)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
+
+
+
 module.exports = router

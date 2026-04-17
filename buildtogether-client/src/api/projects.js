@@ -18,3 +18,9 @@ export async function getProjects() {
   const data = await response.json()
   return data
 }
+
+export async function getUserProjects(firebaseUid) {
+  const response = await fetch(`${BASE_URL}/api/projects/user/${firebaseUid}`)
+  const data = await response.json()
+  return data
+}

@@ -38,3 +38,9 @@ export async function getUser(firebaseUid) {
   const response = await fetch(`${BASE_URL}/api/users/${firebaseUid}`)
   return readResponse(response)
 }
+
+export async function getUserByUsername(username) {
+  const response = await fetch(`${BASE_URL}/api/users/username/${username}`)
+  const data = await response.json()
+  return data
+}

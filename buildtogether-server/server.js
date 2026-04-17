@@ -23,6 +23,9 @@ const projectRoutes = require("./routes/project")
 app.use("/api/projects", projectRoutes)
 
 
+const joinRequestRoutes = require("./routes/joinRequest")
+app.use("/api/join-requests", joinRequestRoutes)
+
 
 // Connect to MongoDB
 mongoose

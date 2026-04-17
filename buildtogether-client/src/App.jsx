@@ -8,6 +8,8 @@ import ProfileSetup from "./pages/ProfileSetup"
 import Signup from "./pages/Signup"
 import VerifyEmail from "./pages/VerifyEmail"
 import CreateProject from './pages/CreateProject'
+import Profile from './pages/Profile'
+import EditProfile from './pages/EditProfile'
 
 
 export default function App() {
@@ -15,7 +17,10 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
+        <Route path="/profile/:username" element={<Profile />} />
+        <Route path="/signup" element={<PublicOnlyRoute><Signup />
+        
+        </PublicOnlyRoute>} />
         <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route
@@ -40,7 +45,13 @@ export default function App() {
           }
           
         />
+        <Route path="/edit-profile" element={
+     <ProtectedRoute>
+      <EditProfile />
+      </ProtectedRoute>
+     } />
       </Routes>
+      
       
     </BrowserRouter>
   )
