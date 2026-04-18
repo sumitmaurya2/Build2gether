@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { GithubAuthProvider, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth"
-import { createUser, getUser } from "../api/users"
+import { findOrCreateUser } from "../api/users"
 import { useAuth } from "../context/AuthContext"
 import { auth } from "../firebase"
 import { getDisplayName, getNextRoute, writePendingEmail } from "../utils/authFlow"
@@ -28,7 +28,8 @@ export default function Login() {
     try {
       const email = formData.email.trim().toLowerCase()
       const result = await signInWithEmailAndPassword(auth, email, formData.password)
-      const profile = await getUser(result.user.uid)
+      // Email login should also recover if the backend profile was not created earlier.
+      const profile = await findOrCreateUser(result.user, getDisplayName(result.user))
       setUserProfile(profile)
       writePendingEmail(result.user.email || email)
       navigate(getNextRoute(result.user, profile), { replace: true })
@@ -52,11 +53,7 @@ export default function Login() {
 
     try {
       const result = await signInWithPopup(auth, provider)
-      const profile = await createUser(
-        result.user.uid,
-        getDisplayName(result.user),
-        result.user.email
-      )
+      const profile = await findOrCreateUser(result.user, getDisplayName(result.user))
 
       setUserProfile(profile)
       writePendingEmail("")
@@ -80,11 +77,7 @@ export default function Login() {
         throw new Error("GitHub account se public email nahi mili. GitHub email visible karke phir try karo.")
       }
 
-      const profile = await createUser(
-        result.user.uid,
-        getDisplayName(result.user),
-        result.user.email
-      )
+      const profile = await findOrCreateUser(result.user, getDisplayName(result.user))
 
       setUserProfile(profile)
       writePendingEmail("")

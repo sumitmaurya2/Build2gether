@@ -6,6 +6,11 @@ function getProfileComplete(payload) {
   return Boolean(payload.username && payload.role && Array.isArray(payload.skills) && payload.skills.length)
 }
 
+function normalizeRole(role) {
+  const allowedRoles = ["developer", "designer", "founder", "marketer", "student", "product"]
+  return allowedRoles.includes(role) ? role : null
+}
+
 router.post("/", async (req, res) => {
   const { firebaseUid, name, email } = req.body
 
@@ -19,6 +24,20 @@ router.post("/", async (req, res) => {
       return res.status(200).json(existingUser)
     }
 
+    // Migrate legacy email/password users into the Firebase flow when the email already exists.
+    const legacyUser = await User.findOne({ email })
+    if (legacyUser) {
+      legacyUser.firebaseUid = firebaseUid
+      legacyUser.name = legacyUser.name || name
+      legacyUser.email = email
+      legacyUser.role = normalizeRole(legacyUser.role)
+      legacyUser.skills = Array.isArray(legacyUser.skills) ? legacyUser.skills : []
+      legacyUser.bio = typeof legacyUser.bio === "string" ? legacyUser.bio : ""
+      legacyUser.profileComplete = getProfileComplete(legacyUser)
+      await legacyUser.save()
+      return res.status(200).json(legacyUser)
+    }
+
     const newUser = await User.create({ firebaseUid, name, email })
     res.status(201).json(newUser)
   } catch (error) {
@@ -26,17 +45,7 @@ router.post("/", async (req, res) => {
   }
 })
 
-router.get("/:firebaseUid", async (req, res) => {
-  try {
-    const user = await User.findOne({ firebaseUid: req.params.firebaseUid })
-    if (!user) {
-      return res.status(404).json({ message: "User not found" })
-    }
-    res.status(200).json(user)
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-})
+
 
 router.patch("/:firebaseUid", async (req, res) => {
   try {
@@ -70,6 +79,19 @@ router.patch("/:firebaseUid", async (req, res) => {
 router.get("/username/:username", async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+    res.status(200).json(user)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
+// GET /api/users/:firebaseUid — user ka data lao
+router.get("/:firebaseUid", async (req, res) => {
+  try {
+    const user = await User.findOne({ firebaseUid: req.params.firebaseUid })
     if (!user) {
       return res.status(404).json({ message: "User not found" })
     }

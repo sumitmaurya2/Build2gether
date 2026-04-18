@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { GithubAuthProvider, GoogleAuthProvider, createUserWithEmailAndPassword, sendEmailVerification, signInWithPopup } from "firebase/auth"
-import { createUser } from "../api/users"
+import { createUser, findOrCreateUser } from "../api/users"
 import { useAuth } from "../context/AuthContext"
 import { auth } from "../firebase"
 import { getDisplayName, writePendingEmail } from "../utils/authFlow"
@@ -64,7 +64,7 @@ export default function Signup() {
 
     try {
       const result = await signInWithPopup(auth, provider)
-      const profile = await createUser(result.user.uid, getDisplayName(result.user), result.user.email)
+      const profile = await findOrCreateUser(result.user, getDisplayName(result.user))
       setUserProfile(profile)
       writePendingEmail("")
       navigate(profile.profileComplete ? "/home" : "/profile-setup", { replace: true })
@@ -87,7 +87,7 @@ export default function Signup() {
         throw new Error("GitHub account se public email nahi mili. GitHub email visible karke phir try karo.")
       }
 
-      const profile = await createUser(result.user.uid, getDisplayName(result.user), result.user.email)
+      const profile = await findOrCreateUser(result.user, getDisplayName(result.user))
       setUserProfile(profile)
       writePendingEmail("")
       navigate(profile.profileComplete ? "/home" : "/profile-setup", { replace: true })

@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import { onAuthStateChanged } from "firebase/auth"
-import { getUser } from "../api/users"
+import { findOrCreateUser } from "../api/users"
 import { auth } from "../firebase"
-import { readStoredProfile, writePendingEmail, writeStoredProfile } from "../utils/authFlow"
+import { getDisplayName, readStoredProfile, writePendingEmail, writeStoredProfile } from "../utils/authFlow"
 
 const AuthContext = createContext()
 
@@ -30,7 +30,8 @@ export function AuthProvider({ children }) {
       writePendingEmail(currentUser.email || "")
 
       try {
-        const profile = await getUser(currentUser.uid)
+        // Keep auth sessions usable even if the API profile is missing for an existing Firebase account.
+        const profile = await findOrCreateUser(currentUser, getDisplayName(currentUser))
         setUserProfile(profile)
       } catch {
         const cachedProfile = readStoredProfile()

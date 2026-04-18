@@ -4,3 +4,8 @@ details
 details.txt
 buildtogether-client/node_modules
 buildtogether-client/.env
+
+node_modules/
+.env
+dist/
+build/

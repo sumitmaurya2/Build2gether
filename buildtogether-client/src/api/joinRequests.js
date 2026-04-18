@@ -1,4 +1,14 @@
-const BASE_URL = "http://localhost:5000"
+import { BASE_URL } from "./config"
+
+async function readResponse(response) {
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    throw new Error(data.message || "Something went wrong")
+  }
+
+  return data
+}
 
 export async function sendJoinRequest(firebaseUid, projectId, message) {
   const response = await fetch(`${BASE_URL}/api/join-requests`, {
@@ -9,6 +19,22 @@ export async function sendJoinRequest(firebaseUid, projectId, message) {
     body: JSON.stringify({ firebaseUid, projectId, message }),
   })
 
-  const data = await response.json()
-  return data
+  return readResponse(response)
+}
+
+
+export async function getProjectRequests(projectId) {
+  const response = await fetch(`${BASE_URL}/api/join-requests/project/${projectId}`)
+  return readResponse(response)
+}
+
+export async function updateRequestStatus(requestId, status) {
+  const response = await fetch(`${BASE_URL}/api/join-requests/${requestId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status }),
+  })
+  return readResponse(response)
 }
