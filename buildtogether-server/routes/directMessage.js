@@ -2,34 +2,22 @@ const express = require("express")
 const router = express.Router()
 const DirectMessage = require("../models/DirectMessage")
 const User = require("../models/User")
+const { attachCurrentUser, requireAuth, requireVerifiedEmail, writeLimiter } = require("../middleware/auth")
 
-// GET /api/dm/:firebaseUid — user ki saari conversations
-router.get("/:firebaseUid", async (req, res) => {
+router.get("/conversation/:uid1/:uid2", requireAuth, requireVerifiedEmail, attachCurrentUser, async (req, res) => {
   try {
-    const user = await User.findOne({ firebaseUid: req.params.firebaseUid })
-    if (!user) return res.status(404).json({ message: "User not found" })
+    if (req.params.uid1 !== req.auth.uid) {
+      return res.status(403).json({ message: "You can only open your own conversations" })
+    }
 
-    const conversations = await DirectMessage.find({
-      participants: user._id
-    }).populate("participants", "name username role firebaseUid")
-      .sort({ updatedAt: -1 })
-
-    res.status(200).json(conversations)
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-})
-
-// GET /api/dm/conversation/:uid1/:uid2 — do logon ki conversation
-router.get("/conversation/:uid1/:uid2", async (req, res) => {
-  try {
-    const user1 = await User.findOne({ firebaseUid: req.params.uid1 })
+    const user1 = req.currentUser
     const user2 = await User.findOne({ firebaseUid: req.params.uid2 })
-
-    if (!user1 || !user2) return res.status(404).json({ message: "User not found" })
+    if (!user2) {
+      return res.status(404).json({ message: "User not found" })
+    }
 
     let conversation = await DirectMessage.findOne({
-      participants: { $all: [user1._id, user2._id] }
+      participants: { $all: [user1._id, user2._id] },
     }).populate("messages.sender", "name username")
 
     if (!conversation) {
@@ -45,29 +33,27 @@ router.get("/conversation/:uid1/:uid2", async (req, res) => {
   }
 })
 
-// POST /api/dm/send — message bhejo
-router.post("/send", async (req, res) => {
+router.post("/send", writeLimiter, requireAuth, requireVerifiedEmail, attachCurrentUser, async (req, res) => {
   try {
-    const { senderFirebaseUid, receiverFirebaseUid, text } = req.body
-
-    const sender = await User.findOne({ firebaseUid: senderFirebaseUid })
+    const { receiverFirebaseUid, text } = req.body
     const receiver = await User.findOne({ firebaseUid: receiverFirebaseUid })
-
-    if (!sender || !receiver) return res.status(404).json({ message: "User not found" })
+    if (!receiver) {
+      return res.status(404).json({ message: "User not found" })
+    }
 
     let conversation = await DirectMessage.findOne({
-      participants: { $all: [sender._id, receiver._id] }
+      participants: { $all: [req.currentUser._id, receiver._id] },
     })
 
     if (!conversation) {
       conversation = await DirectMessage.create({
-        participants: [sender._id, receiver._id],
+        participants: [req.currentUser._id, receiver._id],
         messages: [],
       })
     }
 
     conversation.messages.push({
-      sender: sender._id,
+      sender: req.currentUser._id,
       text,
     })
 
@@ -77,6 +63,23 @@ router.post("/send", async (req, res) => {
     const lastMessage = populated.messages[populated.messages.length - 1]
 
     res.status(201).json(lastMessage)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
+router.get("/:firebaseUid", requireAuth, attachCurrentUser, async (req, res) => {
+  try {
+    if (req.params.firebaseUid !== req.auth.uid) {
+      return res.status(403).json({ message: "You can only access your own conversations" })
+    }
+
+    const conversations = await DirectMessage.find({
+      participants: req.currentUser._id,
+    }).populate("participants", "name username role firebaseUid")
+      .sort({ updatedAt: -1 })
+
+    res.status(200).json(conversations)
   } catch (error) {
     res.status(500).json({ message: error.message })
   }

@@ -4,9 +4,10 @@ import { useAuth } from "../context/AuthContext"
 import { getUser } from "../api/users"
 import { getConversation } from "../api/directMessages"
 import { io } from "socket.io-client"
-import { BASE_URL } from "../api/config"
+import { BASE_URL, SOCKET_URL } from "../api/config"
+import { apiFetch, getAuthToken } from "../api/request"
 
-const socket = io(BASE_URL)
+const socket = io(SOCKET_URL)
 
 export default function DirectChat() {
   const { receiverUid } = useParams()
@@ -26,13 +27,18 @@ export default function DirectChat() {
       setUserData(currentUser)
 
       // Receiver fetch karo
-      const response = await fetch(`${BASE_URL}/api/users/${receiverUid}`)
+      const response = await apiFetch(`${BASE_URL}/api/users/${receiverUid}`)
       const receiver = await response.json()
       setReceiverData(receiver)
 
       const rid = [currentUser._id, receiver._id].sort().join("_")
       setRoomId(rid)
-      socket.emit("join_dm", rid)
+      const token = await getAuthToken()
+      socket.emit("join_dm", {
+        roomId: rid,
+        receiverFirebaseUid: receiverUid,
+        token,
+      })
 
       const convo = await getConversation(user.uid, receiverUid)
       setMessages(convo.messages || [])
@@ -55,13 +61,14 @@ export default function DirectChat() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  function handleSend(e) {
+  async function handleSend(e) {
     e.preventDefault()
     if (!text.trim()) return
 
+    const token = await getAuthToken()
     socket.emit("send_dm", {
-      senderFirebaseUid: user.uid,
       receiverFirebaseUid: receiverUid,
+      token,
       text,
     })
     setText("")

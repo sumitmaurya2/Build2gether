@@ -3,8 +3,10 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { getUser } from "../api/users"
 import { io } from "socket.io-client"
+import { BASE_URL, SOCKET_URL } from "../api/config"
+import { apiFetch, getAuthToken } from "../api/request"
 
-const socket = io("http://localhost:5000")
+const socket = io(SOCKET_URL)
 
 export default function ProjectRoom() {
   const { projectId } = useParams()
@@ -17,16 +19,20 @@ export default function ProjectRoom() {
 
   useEffect(() => {
     async function setup() {
+      if (!user?.uid) {
+        return
+      }
+
       const data = await getUser(user.uid)
       setUserData(data)
 
-      // Purane messages lao
-      const response = await fetch(`http://localhost:5000/api/messages/${projectId}`)
+      // Read the same configured backend for local and Railway deployments.
+      const response = await apiFetch(`${BASE_URL}/api/messages/${projectId}`)
       const oldMessages = await response.json()
       setMessages(oldMessages)
 
-      // Room mein join karo
-      socket.emit("join_room", projectId)
+      const token = await getAuthToken()
+      socket.emit("join_room", { projectId, token })
     }
     setup()
 
@@ -45,13 +51,14 @@ export default function ProjectRoom() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  function handleSend(e) {
+  async function handleSend(e) {
     e.preventDefault()
     if (!text.trim()) return
 
+    const token = await getAuthToken()
     socket.emit("send_message", {
       projectId,
-      firebaseUid: user.uid,
+      token,
       text,
     })
     setText("")

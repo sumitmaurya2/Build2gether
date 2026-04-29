@@ -33,6 +33,11 @@ export default function Signup() {
       return
     }
 
+    if (formData.password.length < 8) {
+      setError("Password kam se kam 8 characters ka hona chahiye")
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -46,7 +51,7 @@ export default function Signup() {
       if (error.code === "auth/email-already-in-use") {
         setError("Ye email already registered hai")
       } else if (error.code === "auth/weak-password") {
-        setError("Password kam se kam 6 characters ka hona chahiye")
+        setError("Password aur strong hona chahiye")
       } else if (error.code === "auth/invalid-email") {
         setError("Valid email daalo")
       } else {
@@ -162,8 +167,8 @@ export default function Signup() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                minLength={6}
-                placeholder="Min. 6 characters"
+                minLength={8}
+                placeholder="Min. 8 characters"
                 className="border border-border rounded-xl px-4 py-3 text-sm bg-surface text-ink placeholder:text-ink-3 focus:outline-none focus:border-ink transition-colors"
               />
             </div>

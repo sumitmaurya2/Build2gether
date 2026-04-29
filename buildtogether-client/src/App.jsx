@@ -15,6 +15,7 @@ import ProjectDetail from './pages/ProjectDetail'
 import EditProject from './pages/EditProject'
 import ProjectRoom from './pages/ProjectRoom'
 import ProtectedRoute from './components/ProtectedRoute'
+import PublicOnlyRoute from './components/PublicOnlyRoute'
 import BottomNav from './components/BottomNav'
 import Messages from './pages/Messages'
 import DirectChat from './pages/DirectChat'
@@ -29,23 +30,62 @@ function AppContent() {
     <>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
+        <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
         <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="/profile-setup" element={<ProtectedRoute><ProfileSetup /></ProtectedRoute>} />
-        <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-        <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
-        <Route path="/create-project" element={<ProtectedRoute><CreateProject /></ProtectedRoute>} />
-        <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-        <Route path="/requests" element={<ProtectedRoute><Requests /></ProtectedRoute>} />
-        <Route path="/profile/:username" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
-        <Route path="/project/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
-        <Route path="/edit-project/:id" element={<ProtectedRoute><EditProject /></ProtectedRoute>} />
-        <Route path="/project-room/:projectId" element={<ProtectedRoute><ProjectRoom /></ProtectedRoute>} />
+        <Route
+          path="/profile-setup"
+          element={<ProtectedRoute requireIncompleteProfile><ProfileSetup /></ProtectedRoute>}
+        />
+        <Route
+          path="/home"
+          element={<ProtectedRoute requireProfileComplete><Home /></ProtectedRoute>}
+        />
+        <Route
+          path="/explore"
+          element={<ProtectedRoute requireProfileComplete><Explore /></ProtectedRoute>}
+        />
+        <Route
+          path="/create-project"
+          element={<ProtectedRoute requireProfileComplete><CreateProject /></ProtectedRoute>}
+        />
+        <Route
+          path="/notifications"
+          element={<ProtectedRoute requireProfileComplete><Notifications /></ProtectedRoute>}
+        />
+        <Route
+          path="/requests"
+          element={<ProtectedRoute requireProfileComplete><Requests /></ProtectedRoute>}
+        />
+        <Route
+          path="/profile/:username"
+          element={<ProtectedRoute requireProfileComplete><Profile /></ProtectedRoute>}
+        />
+        <Route
+          path="/edit-profile"
+          element={<ProtectedRoute requireProfileComplete><EditProfile /></ProtectedRoute>}
+        />
+        <Route
+          path="/project/:id"
+          element={<ProtectedRoute requireProfileComplete><ProjectDetail /></ProtectedRoute>}
+        />
+        <Route
+          path="/edit-project/:id"
+          element={<ProtectedRoute requireProfileComplete><EditProject /></ProtectedRoute>}
+        />
+        <Route
+          path="/project-room/:projectId"
+          element={<ProtectedRoute requireProfileComplete><ProjectRoom /></ProtectedRoute>}
+        />
 
-        <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-        <Route path="/dm/:receiverUid" element={<ProtectedRoute><DirectChat /></ProtectedRoute>} />
+        <Route
+          path="/messages"
+          element={<ProtectedRoute requireProfileComplete><Messages /></ProtectedRoute>}
+        />
+        <Route
+          path="/dm/:receiverUid"
+          element={<ProtectedRoute requireProfileComplete><DirectChat /></ProtectedRoute>}
+        />
       </Routes>
       {showNav && <BottomNav />}
     </>

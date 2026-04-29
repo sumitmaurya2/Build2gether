@@ -12,7 +12,7 @@ const SKILLS = [
 const ROLES = ["developer", "designer", "founder", "marketer", "student", "product"]
 
 export default function EditProfile() {
-  const { user } = useAuth()
+  const { user, setUserProfile } = useAuth()
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
     name: "",
@@ -48,8 +48,10 @@ export default function EditProfile() {
   async function handleSubmit(e) {
     e.preventDefault()
     try {
-      await updateUserProfile(user.uid, formData)
-      navigate(`/profile/${formData.username}`)
+      const updatedProfile = await updateUserProfile(user.uid, formData)
+      // Keep local auth state aligned so redirect logic reflects the latest profile completeness.
+      setUserProfile(updatedProfile)
+      navigate(`/profile/${updatedProfile.username}`)
     } catch (error) {
       console.log(error.message)
     }

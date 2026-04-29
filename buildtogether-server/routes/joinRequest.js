@@ -4,20 +4,25 @@ const JoinRequest = require("../models/JoinRequest")
 const User = require("../models/User")
 const Project = require("../models/Project")
 const Notification = require("../models/Notification")
+const { attachCurrentUser, requireAuth, requireVerifiedEmail, writeLimiter } = require("../middleware/auth")
 
 // POST — request bhejo
-router.post("/", async (req, res) => {
+router.post("/", writeLimiter, requireAuth, requireVerifiedEmail, attachCurrentUser, async (req, res) => {
   try {
-    const { firebaseUid, projectId, message } = req.body
+    const { projectId, message } = req.body
 
-    const sender = await User.findOne({ firebaseUid })
-    if (!sender) {
-      return res.status(404).json({ message: "User not found" })
+    const project = await Project.findById(projectId)
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" })
+    }
+
+    if (project.postedBy.toString() === req.currentUser._id.toString()) {
+      return res.status(400).json({ message: "You already own this project" })
     }
 
     const existing = await JoinRequest.findOne({
       project: projectId,
-      sender: sender._id,
+      sender: req.currentUser._id,
     })
     if (existing) {
       return res.status(400).json({ message: "Already sent request" })
@@ -25,16 +30,14 @@ router.post("/", async (req, res) => {
 
     const request = await JoinRequest.create({
       project: projectId,
-      sender: sender._id,
+      sender: req.currentUser._id,
       message,
     })
 
-    // Project owner ko notification bhejo
-    const project = await Project.findById(projectId)
     await Notification.create({
       recipient: project.postedBy,
       type: "join_request",
-      message: `${sender.name} wants to join your project`,
+      message: `${req.currentUser.name} wants to join your project`,
       link: `/requests`,
     })
 
@@ -45,8 +48,16 @@ router.post("/", async (req, res) => {
 })
 
 // GET — project ki requests
-router.get("/project/:projectId", async (req, res) => {
+router.get("/project/:projectId", requireAuth, attachCurrentUser, async (req, res) => {
   try {
+    const project = await Project.findOne({
+      _id: req.params.projectId,
+      postedBy: req.currentUser._id,
+    })
+    if (!project) {
+      return res.status(403).json({ message: "Only the project owner can view requests" })
+    }
+
     const requests = await JoinRequest.find({ project: req.params.projectId })
       .populate("sender", "name username role skills")
     res.status(200).json(requests)
@@ -56,19 +67,28 @@ router.get("/project/:projectId", async (req, res) => {
 })
 
 // PATCH — accept ya reject
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", writeLimiter, requireAuth, requireVerifiedEmail, attachCurrentUser, async (req, res) => {
   try {
     const { status } = req.body
+    if (!["accepted", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid request status" })
+    }
 
-    const request = await JoinRequest.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    )
-
+    const request = await JoinRequest.findById(req.params.id)
     if (!request) {
       return res.status(404).json({ message: "Request not found" })
     }
+
+    const ownedProject = await Project.findOne({
+      _id: request.project,
+      postedBy: req.currentUser._id,
+    })
+    if (!ownedProject) {
+      return res.status(403).json({ message: "Only the project owner can update requests" })
+    }
+
+    request.status = status
+    await request.save()
 
     if (status === "accepted") {
       const project = await Project.findByIdAndUpdate(

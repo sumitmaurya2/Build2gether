@@ -1,17 +1,8 @@
 import { BASE_URL } from "./config"
-
-async function readResponse(response) {
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
-    throw new Error(data.message || "Something went wrong")
-  }
-
-  return data
-}
+import { apiFetch, readResponse } from "./request"
 
 export async function createProject(projectData) {
-  const response = await fetch(`${BASE_URL}/api/projects`, {
+  const response = await apiFetch(`${BASE_URL}/api/projects`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -29,19 +20,19 @@ export async function getProjects(page = 1) {
 }
 
 export async function getUserProjects(firebaseUid) {
-  const response = await fetch(`${BASE_URL}/api/projects/user/${firebaseUid}`)
+  const response = await apiFetch(`${BASE_URL}/api/projects/user/${firebaseUid}`)
   return readResponse(response)
 }
 
 export async function deleteProject(projectId) {
-  const response = await fetch(`${BASE_URL}/api/projects/${projectId}`, {
+  const response = await apiFetch(`${BASE_URL}/api/projects/${projectId}`, {
     method: "DELETE",
   })
   return readResponse(response)
 }
 
 export async function updateProject(projectId, projectData) {
-  const response = await fetch(`${BASE_URL}/api/projects/${projectId}`, {
+  const response = await apiFetch(`${BASE_URL}/api/projects/${projectId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

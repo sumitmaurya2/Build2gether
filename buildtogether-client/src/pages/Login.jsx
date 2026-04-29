@@ -1,10 +1,28 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { GithubAuthProvider, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth"
+import { GithubAuthProvider, GoogleAuthProvider, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth"
 import { findOrCreateUser } from "../api/users"
 import { useAuth } from "../context/AuthContext"
 import { auth } from "../firebase"
 import { getDisplayName, getNextRoute, writePendingEmail } from "../utils/authFlow"
+
+const LOGIN_ATTEMPT_LIMIT = 5
+const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000
+
+function readLoginAttempts(email) {
+  const key = `bt_login_attempts:${email}`
+  const attempts = JSON.parse(window.localStorage.getItem(key) || "[]")
+  const now = Date.now()
+  return attempts.filter((timestamp) => now - timestamp < LOGIN_ATTEMPT_WINDOW_MS)
+}
+
+function writeLoginAttempts(email, attempts) {
+  window.localStorage.setItem(`bt_login_attempts:${email}`, JSON.stringify(attempts))
+}
+
+function clearLoginAttempts(email) {
+  window.localStorage.removeItem(`bt_login_attempts:${email}`)
+}
 
 export default function Login() {
   const navigate = useNavigate()
@@ -14,6 +32,7 @@ export default function Login() {
     password: "",
   })
   const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
   const [loading, setLoading] = useState(false)
 
   function handleChange(e) {
@@ -23,23 +42,61 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError("")
+    setMessage("")
     setLoading(true)
+    const email = formData.email.trim().toLowerCase()
 
     try {
-      const email = formData.email.trim().toLowerCase()
+      const attempts = readLoginAttempts(email)
+      if (attempts.length >= LOGIN_ATTEMPT_LIMIT) {
+        setError("Bahut attempts ho gaye. 15 minutes baad dobara try karo.")
+        setLoading(false)
+        return
+      }
+
       const result = await signInWithEmailAndPassword(auth, email, formData.password)
+      clearLoginAttempts(email)
       // Email login should also recover if the backend profile was not created earlier.
       const profile = await findOrCreateUser(result.user, getDisplayName(result.user))
       setUserProfile(profile)
       writePendingEmail(result.user.email || email)
       navigate(getNextRoute(result.user, profile), { replace: true })
     } catch (error) {
+      if (email) {
+        writeLoginAttempts(email, [...readLoginAttempts(email), Date.now()])
+      }
+
       if (error.code === "auth/invalid-credential") {
         setError("Email ya password sahi nahi hai")
       } else if (error.code === "auth/invalid-email") {
         setError("Valid email daalo")
       } else {
         setError(error.message || "Login nahi ho paya")
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handlePasswordReset() {
+    setError("")
+    setMessage("")
+
+    const email = formData.email.trim().toLowerCase()
+    if (!email) {
+      setError("Password reset ke liye email daalo")
+      return
+    }
+
+    setLoading(true)
+    try {
+      await sendPasswordResetEmail(auth, email)
+      setMessage("Password reset link bhej diya gaya hai. Link expire hone se pehle use kar lena.")
+    } catch (error) {
+      if (error.code === "auth/invalid-email") {
+        setError("Valid email daalo")
+      } else {
+        setError("Password reset email bhejne mein problem aayi")
       }
     } finally {
       setLoading(false)
@@ -117,6 +174,11 @@ export default function Login() {
               {error}
             </div>
           ) : null}
+          {message ? (
+            <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm leading-6 text-green-700">
+              {message}
+            </div>
+          ) : null}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
@@ -151,6 +213,14 @@ export default function Login() {
               className="mt-2 rounded-full bg-ink py-3 text-sm font-medium text-cream transition-colors hover:bg-brand disabled:opacity-70"
             >
               {loading ? "Logging in..." : "Log in ->"}
+            </button>
+            <button
+              type="button"
+              onClick={handlePasswordReset}
+              disabled={loading}
+              className="text-sm font-medium text-ink-3 transition-colors hover:text-brand disabled:opacity-70"
+            >
+              Forgot password?
             </button>
           </form>
 
