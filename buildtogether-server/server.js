@@ -22,6 +22,9 @@ const app = express()
 const server = http.createServer(app)
 const SESSION_MAX_AGE_SECONDS = Number(process.env.SESSION_MAX_AGE_SECONDS || 60 * 60 * 12)
 
+// Required by managed hosts, which place the app behind a reverse proxy.
+app.set("trust proxy", 1)
+
 function getAllowedOrigins() {
   const configuredOrigins = process.env.CLIENT_URLS || process.env.CLIENT_URL || "http://localhost:5173"
 
@@ -58,6 +61,11 @@ app.use(cors({
 }))
 app.use(helmet())
 app.use(express.json())
+
+// Used by the hosting provider to decide whether this instance is ready to receive traffic.
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok" })
+})
 
 app.use("/api/users", userRoutes)
 app.use("/api/projects", projectRoutes)

@@ -9,3 +9,5 @@ node_modules/
 .env
 dist/
 build/
+
+DEPLOY_FREE.md
