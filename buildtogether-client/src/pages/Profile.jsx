@@ -4,11 +4,14 @@ import { getUserByUsername, getUser } from "../api/users"
 import { getUserProjects, deleteProject } from "../api/projects"
 import { useAuth } from "../context/AuthContext"
 import AppNavbar from "../components/AppNavbar"
+import { signOut } from "firebase/auth"
+import { auth } from "../firebase"
+import { writePendingEmail, writeStoredProfile } from "../utils/authFlow"
 
 export default function Profile() {
   const { username } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, setUserProfile } = useAuth()
   const [userData, setUserData] = useState(null)
   const [currentUserData, setCurrentUserData] = useState(null)
   const [projects, setProjects] = useState([])
@@ -45,6 +48,14 @@ export default function Profile() {
 
   const isOwnProfile = currentUserData?.firebaseUid === userData?.firebaseUid
 
+  async function handleLogout() {
+    setUserProfile(null)
+    writeStoredProfile(null)
+    writePendingEmail("")
+    await signOut(auth)
+    navigate("/", { replace: true })
+  }
+
   return (
     <div className="min-h-screen bg-cream">
       <AppNavbar userData={currentUserData} unreadCount={0} />
@@ -57,16 +68,34 @@ export default function Profile() {
             <div className="w-16 h-16 rounded-full bg-ink flex items-center justify-center text-cream text-2xl font-medium">
               {userData.name?.charAt(0).toUpperCase()}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap justify-end gap-2">
               {isOwnProfile ? (
-                <button
-                  onClick={() => navigate("/edit-profile")}
-                  className="text-xs border border-border text-ink-2 px-4 py-2 rounded-full hover:border-ink transition-colors"
-                >
-                  Edit profile
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/home")}
+                    className="text-xs border border-border text-ink-2 px-3 py-2 rounded-full hover:border-ink transition-colors"
+                  >
+                    Home
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/edit-profile")}
+                    className="text-xs border border-border text-ink-2 px-3 py-2 rounded-full hover:border-ink transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="text-xs border border-red-200 text-red-600 px-3 py-2 rounded-full hover:bg-red-50 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
               ) : (
                 <button
+                  type="button"
                   onClick={() => navigate(`/dm/${userData?.firebaseUid}`)}
                   className="text-xs border border-border text-ink-2 px-4 py-2 rounded-full hover:border-ink transition-colors"
                 >
