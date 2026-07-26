@@ -99,7 +99,7 @@ export default function Navbar() {
           {["How it works", "Features", "Community"].map((item) => (
             <a 
               key={item}
-              href={`#${item.toLowerCase().replace(/\s+/g, '')}`} 
+              href={`#${item === "How it works" ? "how" : item === "Community" ? "who" : "features"}`}
               className="text-sm font-medium text-ink-3 hover:text-ink transition-colors focus:outline-none focus:text-brand"
             >
               {item}
@@ -234,7 +234,7 @@ export default function Navbar() {
                   {["How it works", "Features", "Community"].map((item) => (
                     <a
                       key={item}
-                      href={`#${item.toLowerCase().replace(/\s+/g, '')}`}
+                      href={`#${item === "How it works" ? "how" : item === "Community" ? "who" : "features"}`}
                       className="block px-3 py-2.5 text-sm font-medium text-ink-2 rounded-xl hover:bg-cream hover:text-ink transition-colors focus:outline-none focus:bg-cream"
                       onClick={() => setMenuOpen(false)}
                     >
@@ -295,7 +295,7 @@ export default function Navbar() {
                   {["How it works", "Features", "Community"].map((item) => (
                     <a 
                       key={item}
-                      href={`#${item.toLowerCase().replace(/\s+/g, '')}`} 
+                      href={`#${item === "How it works" ? "how" : item === "Community" ? "who" : "features"}`}
                       className="px-4 py-3 text-sm font-medium text-ink-2 hover:bg-cream hover:text-ink rounded-xl transition-colors" 
                       onClick={() => setMenuOpen(false)}
                     >

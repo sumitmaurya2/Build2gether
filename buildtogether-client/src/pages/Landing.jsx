@@ -164,7 +164,7 @@ export default function Landing() {
             }`}
             style={{ transitionDelay: '240ms' }}
           >
-            BuildTogether is a collaboration network for serious builders.
+            Build2gether is a collaboration network for serious builders.
             Post your project, find the right teammates, ship together and let your work speak for itself.
           </p>
 

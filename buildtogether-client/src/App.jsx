@@ -19,12 +19,18 @@ import PublicOnlyRoute from './components/PublicOnlyRoute'
 import BottomNav from './components/BottomNav'
 import Messages from './pages/Messages'
 import DirectChat from './pages/DirectChat'
+import { useAuth } from './context/AuthContext'
+
+function MyProfileRedirect() {
+  const { userProfile } = useAuth()
+  return <Navigate to={userProfile?.username ? `/profile/${userProfile.username}` : '/home'} replace />
+}
 
 
 function AppContent() {
   const location = useLocation()
-  const protectedPaths = ["/home", "/explore", "/create-project", "/notifications", "/requests", "/profile", "/project"]
-  const showNav = protectedPaths.some(p => location.pathname.startsWith(p))
+  const mobileNavPaths = ["/home", "/explore", "/create-project", "/messages", "/notifications"]
+  const showNav = mobileNavPaths.includes(location.pathname)
 
   return (
     <>
@@ -60,6 +66,10 @@ function AppContent() {
         <Route
           path="/profile/:username"
           element={<ProtectedRoute requireProfileComplete><Profile /></ProtectedRoute>}
+        />
+        <Route
+          path="/profile"
+          element={<ProtectedRoute requireProfileComplete><MyProfileRedirect /></ProtectedRoute>}
         />
         <Route
           path="/edit-profile"

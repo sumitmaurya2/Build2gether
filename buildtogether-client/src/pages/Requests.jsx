@@ -11,11 +11,15 @@ export default function Requests() {
   const navigate = useNavigate()
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
+  const [userData, setUserData] = useState(null)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     async function fetchRequests() {
-      const userData = await getUser(user.uid)
-      const projects = await getUserProjects(userData.firebaseUid)
+      try {
+      const profile = await getUser(user.uid)
+      setUserData(profile)
+      const projects = await getUserProjects(profile.firebaseUid)
 
       // Har project ki requests fetch karo
       const allRequests = []
@@ -28,22 +32,34 @@ export default function Requests() {
 
       // Sirf pending dikhao
       setRequests(allRequests.filter(r => r.status === "pending"))
-      setLoading(false)
+      } catch {
+        setError("Requests load nahi ho sake. Dobara try karein.")
+      } finally {
+        setLoading(false)
+      }
     }
     fetchRequests()
-  }, [user])
+  }, [user.uid])
 
 async function handleAccept(requestId, projectId) {
-  await updateRequestStatus(requestId, "accepted")
-  setRequests(requests.filter(r => r._id !== requestId))
-  navigate(`/project-room/${projectId}`)
+  try {
+    await updateRequestStatus(requestId, "accepted")
+    setRequests((items) => items.filter(r => r._id !== requestId))
+    navigate(`/project-room/${projectId}`)
+  } catch {
+    setError("Request update nahi ho saki. Dobara try karein.")
+  }
 }
 
 
 
   async function handleReject(requestId) {
-    await updateRequestStatus(requestId, "rejected")
-    setRequests(requests.filter(r => r._id !== requestId))
+    try {
+      await updateRequestStatus(requestId, "rejected")
+      setRequests((items) => items.filter(r => r._id !== requestId))
+    } catch {
+      setError("Request update nahi ho saki. Dobara try karein.")
+    }
   }
 
   return (
@@ -52,7 +68,7 @@ async function handleAccept(requestId, projectId) {
       {/* Navbar */}
       <AppNavbar userData={userData} unreadCount={0} />
 
-      <div className="max-w-2xl mx-auto px-4 pt-24 pb-12">
+      <div className="max-w-2xl mx-auto px-4 pt-24 pb-24 md:pb-12">
 
         <h1 className="font-display text-4xl text-ink italic mb-2">
           Join requests
@@ -60,6 +76,7 @@ async function handleAccept(requestId, projectId) {
         <p className="text-sm text-ink-3 mb-8">
           People who want to join your projects
         </p>
+        {error && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
         {loading ? (
           <p className="text-sm text-ink-3">Loading...</p>

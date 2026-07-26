@@ -72,7 +72,7 @@ export default function EditProject() {
   }
 
   return (
-    <div className="min-h-screen bg-cream px-4 py-12">
+    <div className="min-h-screen bg-cream px-4 py-12 pb-28 md:pb-12">
       <div className="max-w-xl mx-auto">
 
         <button
@@ -156,7 +156,7 @@ export default function EditProject() {
           </div>
 
           {/* Team size + Timeline */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-ink-2">Team size</label>
               <input

@@ -33,7 +33,7 @@ export default function Profile() {
       setLoading(false)
     }
     fetchProfile()
-  }, [username])
+  }, [username, user.uid, navigate])
 
   if (loading) {
     return (
@@ -97,7 +97,7 @@ export default function Profile() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 mb-4">
           {[
             { label: "Projects", value: projects.length.toString() },
             { label: "Collaborations", value: "0" },

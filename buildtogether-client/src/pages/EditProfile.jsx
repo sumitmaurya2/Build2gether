@@ -58,7 +58,7 @@ export default function EditProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-cream px-4 py-12">
+    <div className="min-h-screen bg-cream px-4 py-12 pb-28 md:pb-12">
       <div className="max-w-xl mx-auto">
 
         <button

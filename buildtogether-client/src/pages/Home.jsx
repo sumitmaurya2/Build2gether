@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react"
+import { useCallback, useEffect, useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { getUser } from "../api/users"
@@ -38,7 +38,7 @@ export default function Home() {
     fetchData()
   }, [user])
 
-  async function loadMore() {
+  const loadMore = useCallback(async () => {
     if (!hasMore || loadingMore) return
     setLoadingMore(true)
     const nextPage = page + 1
@@ -47,7 +47,7 @@ export default function Home() {
     setHasMore(data.hasMore)
     setPage(nextPage)
     setLoadingMore(false)
-  }
+  }, [hasMore, loadingMore, page])
 
   useEffect(() => {
     if (!hasMore || loadingMore || initialLoading) return
@@ -68,7 +68,7 @@ export default function Home() {
     return () => {
       if (observerRef.current) observerRef.current.disconnect()
     }
-  }, [hasMore, loadingMore, page, initialLoading])
+  }, [hasMore, loadingMore, initialLoading, loadMore])
 
   if (initialLoading) {
     return (

@@ -14,6 +14,8 @@ const ROLES = ["developer", "designer", "founder", "marketer", "product", "stude
 export default function CreateProject() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const [formData, setFormData] = useState({
     title: "",
@@ -46,16 +48,28 @@ export default function CreateProject() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    setError("")
+    if (!formData.title.trim() || !formData.description.trim()) {
+      setError("Project title aur description bharna zaroori hai.")
+      return
+    }
+    if (formData.skills.length === 0 || formData.rolesNeeded.length === 0) {
+      setError("Kam se kam ek skill aur ek required role select karein.")
+      return
+    }
+    setLoading(true)
     try {
       await createProject({ ...formData, firebaseUid: user.uid })
       navigate("/home")
     } catch (error) {
-      console.log(error.message)
+      setError(error.message || "Project post nahi ho saka. Dobara try karein.")
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-cream px-4 py-12">
+    <div className="min-h-screen bg-cream px-4 py-12 pb-28 md:pb-12">
       <div className="max-w-xl mx-auto">
 
         <button
@@ -71,6 +85,7 @@ export default function CreateProject() {
         <p className="text-sm text-ink-3 mb-10">
           Tell builders what you're working on
         </p>
+        {error && <p role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-8">
 
@@ -81,6 +96,7 @@ export default function CreateProject() {
               type="text"
               placeholder="e.g. AI Resume Builder for students"
               value={formData.title}
+              required
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="border border-border rounded-xl px-4 py-3 text-sm bg-surface text-ink placeholder:text-ink-3 focus:outline-none focus:border-ink transition-colors"
             />
@@ -92,6 +108,7 @@ export default function CreateProject() {
             <textarea
               placeholder="What are you building? What problem does it solve?"
               value={formData.description}
+              required
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
               className="border border-border rounded-xl px-4 py-3 text-sm bg-surface text-ink placeholder:text-ink-3 focus:outline-none focus:border-ink transition-colors resize-none"
@@ -141,7 +158,7 @@ export default function CreateProject() {
           </div>
 
           {/* Team size + Timeline */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-ink-2">Team size needed</label>
               <input
@@ -209,6 +226,7 @@ export default function CreateProject() {
 
           <button
             type="submit"
+            disabled={loading}
             className="bg-ink text-cream text-sm font-medium py-3 rounded-full hover:bg-brand transition-colors"
           >
             Post project →

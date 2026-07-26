@@ -14,21 +14,35 @@ export default function Explore() {
   const [stage, setStage] = useState("")
   const [budget, setBudget] = useState("")
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   useEffect(() => {
-    async function fetchUser() {
-      const data = await getUser(user.uid)
-      setUserData(data)
+    async function loadPage() {
+      setLoading(true)
+      try {
+        const [profile, projectList] = await Promise.all([getUser(user.uid), searchProjects()])
+        setUserData(profile)
+        setProjects(projectList)
+      } catch {
+        setError("Projects load nahi ho sake. Dobara try karein.")
+      } finally {
+        setLoading(false)
+      }
     }
-    fetchUser()
-    handleSearch()
-  }, [])
+    loadPage()
+  }, [user.uid])
 
-  async function handleSearch() {
+  async function handleSearch(nextQuery = query, nextStage = stage, nextBudget = budget) {
     setLoading(true)
-    const data = await searchProjects(query, stage, budget)
-    setProjects(data)
-    setLoading(false)
+    setError("")
+    try {
+      const data = await searchProjects(nextQuery, nextStage, nextBudget)
+      setProjects(data)
+    } catch {
+      setError("Search complete nahi ho saka. Dobara try karein.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   function handleKeyDown(e) {
@@ -41,7 +55,7 @@ export default function Explore() {
       {/* Navbar */}
      <AppNavbar userData={userData} unreadCount={0} />
 
-      <div className="max-w-2xl mx-auto px-4 pt-24 pb-12">
+      <div className="max-w-2xl mx-auto px-4 pt-24 pb-24 md:pb-12">
 
         {/* Search bar */}
         <div className="flex gap-2 mb-4">
@@ -67,7 +81,7 @@ export default function Explore() {
           {["", "idea", "building", "launched"].map((s) => (
             <button
               key={s}
-              onClick={() => { setStage(s); }}
+              onClick={() => { setStage(s); handleSearch(query, s, budget) }}
               className={`text-xs px-3 py-1.5 rounded-full border transition-all capitalize ${
                 stage === s
                   ? "bg-ink text-cream border-ink"
@@ -84,7 +98,7 @@ export default function Explore() {
           {["", "unpaid", "paid", "equity"].map((b) => (
             <button
               key={b}
-              onClick={() => { setBudget(b); }}
+              onClick={() => { setBudget(b); handleSearch(query, stage, b) }}
               className={`text-xs px-3 py-1.5 rounded-full border transition-all capitalize ${
                 budget === b
                   ? "bg-brand text-white border-brand"
@@ -96,13 +110,8 @@ export default function Explore() {
           ))}
         </div>
 
-        {/* Apply filters button */}
-        <button
-          onClick={handleSearch}
-          className="w-full border border-border text-ink-2 text-sm py-2.5 rounded-full hover:border-ink transition-colors mb-6"
-        >
-          Apply filters
-        </button>
+        <p className="mb-6 text-xs text-ink-3">Filters update results instantly. Press Enter or Search after typing.</p>
+        {error && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
         {/* Results */}
         {loading ? (

@@ -28,7 +28,7 @@ export default function ProjectDetail() {
       setLoading(false)
     }
     fetchData()
-  }, [id])
+  }, [id, user.uid])
 
   if (loading) {
     return (

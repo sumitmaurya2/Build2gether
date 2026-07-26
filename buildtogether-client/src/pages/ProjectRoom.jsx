@@ -65,12 +65,12 @@ export default function ProjectRoom() {
   }
 
   return (
-    <div className="h-screen bg-cream flex flex-col">
+    <div className="min-h-dvh bg-cream flex flex-col">
 
       {/* Navbar */}
       <nav className="bg-surface border-b border-border px-6 h-14 flex items-center justify-between shrink-0">
         <button
-          onClick={() => navigate("/home")}
+          onClick={() => navigate(-1)}
           className="text-sm text-ink-3 hover:text-ink transition-colors"
         >
           ← Back

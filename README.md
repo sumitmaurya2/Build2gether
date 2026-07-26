@@ -1,4 +1,4 @@
-# 🚀 BuildTogether
+# 🚀 Build2gether
 
 A full-stack web application where users can collaborate and build projects together.
 

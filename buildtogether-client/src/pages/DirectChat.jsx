@@ -17,7 +17,6 @@ export default function DirectChat() {
   const [receiverData, setReceiverData] = useState(null)
   const [messages, setMessages] = useState([])
   const [text, setText] = useState("")
-  const [roomId, setRoomId] = useState("")
   const bottomRef = useRef(null)
 
  useEffect(() => {
@@ -32,7 +31,6 @@ export default function DirectChat() {
       setReceiverData(receiver)
 
       const rid = [currentUser._id, receiver._id].sort().join("_")
-      setRoomId(rid)
       const token = await getAuthToken()
       socket.emit("join_dm", {
         roomId: rid,
@@ -55,7 +53,7 @@ export default function DirectChat() {
   return () => {
     socket.off("receive_dm")
   }
-}, [receiverUid])
+}, [receiverUid, user.uid])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -75,7 +73,7 @@ export default function DirectChat() {
   }
 
   return (
-    <div className="h-screen bg-cream flex flex-col">
+    <div className="min-h-dvh bg-cream flex flex-col">
 
       {/* Navbar */}
       <nav className="bg-surface border-b border-border px-6 h-14 flex items-center gap-4 shrink-0">
