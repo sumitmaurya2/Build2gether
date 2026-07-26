@@ -26,8 +26,8 @@ export default function ProjectRoom() {
 
       // Read the same configured backend for local and Railway deployments.
       const response = await apiFetch(`${BASE_URL}/api/messages/${projectId}?page=1&limit=200`)
-      const data = await response.json()
-      setMessages(data.messages || [])
+      const messagesData = await response.json()
+      setMessages(messagesData.messages || [])
 
       // Ensure the shared socket is connected with auth before joining.
       try {
