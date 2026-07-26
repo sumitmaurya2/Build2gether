@@ -22,11 +22,23 @@ router.get("/:projectId", requireAuth, attachCurrentUser, async (req, res) => {
       return res.status(403).json({ message: "You are not a member of this project" })
     }
 
+    const page = parseInt(req.query.page, 10) || 1
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200)
+    const skip = (page - 1) * limit
+
+    const total = await Message.countDocuments({ projectId: req.params.projectId })
     const messages = await Message.find({ projectId: req.params.projectId })
       .populate("sender", "name username")
       .sort({ createdAt: 1 })
+      .skip(skip)
+      .limit(limit)
 
-    res.status(200).json(messages)
+    res.status(200).json({
+      messages,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      hasMore: page < Math.ceil(total / limit),
+    })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }

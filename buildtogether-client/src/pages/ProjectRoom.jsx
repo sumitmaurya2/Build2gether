@@ -2,11 +2,9 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { getUser } from "../api/users"
-import { io } from "socket.io-client"
-import { BASE_URL, SOCKET_URL } from "../api/config"
+import { socket, connectSocket } from "../api/socket"
+import { BASE_URL } from "../api/config"
 import { apiFetch, getAuthToken } from "../api/request"
-
-const socket = io(SOCKET_URL)
 
 export default function ProjectRoom() {
   const { projectId } = useParams()
@@ -27,9 +25,16 @@ export default function ProjectRoom() {
       setUserData(data)
 
       // Read the same configured backend for local and Railway deployments.
-      const response = await apiFetch(`${BASE_URL}/api/messages/${projectId}`)
-      const oldMessages = await response.json()
-      setMessages(oldMessages)
+      const response = await apiFetch(`${BASE_URL}/api/messages/${projectId}?page=1&limit=200`)
+      const data = await response.json()
+      setMessages(data.messages || [])
+
+      // Ensure the shared socket is connected with auth before joining.
+      try {
+        await connectSocket()
+      } catch (err) {
+        console.error("Socket connect failed", err)
+      }
 
       const token = await getAuthToken()
       socket.emit("join_room", { projectId, token })

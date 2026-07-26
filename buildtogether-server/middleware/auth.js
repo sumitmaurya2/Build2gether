@@ -26,7 +26,8 @@ async function requireAuth(req, res, next) {
       return res.status(401).json({ message: "Authentication required" })
     }
 
-    const decodedToken = await admin.auth().verifyIdToken(token, true)
+    // Use cached verifier to avoid repeated network calls to Firebase.
+    const decodedToken = await verifyIdTokenCached(token)
     if (tokenSessionExpired(decodedToken)) {
       return res.status(401).json({ message: "Session expired. Please sign in again." })
     }
@@ -87,6 +88,31 @@ const writeLimiter = rateLimit({
   message: { message: "Too many requests. Please slow down." },
 })
 
+// Simple in-memory token verification cache to reduce repeated network calls
+// to Firebase for short-lived tokens. TTL is in milliseconds.
+const tokenCache = new Map()
+const TOKEN_CACHE_TTL = 60 * 1000 // 60 seconds
+
+async function verifyIdTokenCached(token) {
+  if (!token) return null
+
+  const now = Date.now()
+  const cached = tokenCache.get(token)
+  if (cached && cached.expiresAt > now) {
+    return cached.decoded
+  }
+
+  try {
+    const decoded = await admin.auth().verifyIdToken(token)
+    tokenCache.set(token, { decoded, expiresAt: now + TOKEN_CACHE_TTL })
+    return decoded
+  } catch (err) {
+    // On failure, ensure cache does not retain stale entries.
+    tokenCache.delete(token)
+    throw err
+  }
+}
+
 module.exports = {
   attachCurrentUser,
   authLimiter,
@@ -94,4 +120,5 @@ module.exports = {
   requireSelfParam,
   requireVerifiedEmail,
   writeLimiter,
+  verifyIdTokenCached,
 }

@@ -25,9 +25,27 @@ router.get("/conversation/:uid1/:uid2", requireAuth, requireVerifiedEmail, attac
         participants: [user1._id, user2._id],
         messages: [],
       })
+      // Newly created conversation has no messages
+      return res.status(200).json({ messages: [], currentPage: 1, totalPages: 1, hasMore: false })
     }
 
-    res.status(200).json(conversation)
+    // Paginate messages (return newest messages first by page=1)
+    const page = parseInt(req.query.page, 10) || 1
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200)
+
+    const total = conversation.messages.length
+    const totalPages = Math.max(1, Math.ceil(total / limit))
+    const start = Math.max(0, total - page * limit)
+    const end = total - (page - 1) * limit
+
+    const pagedMessages = conversation.messages.slice(start, end)
+
+    res.status(200).json({
+      messages: pagedMessages,
+      currentPage: page,
+      totalPages,
+      hasMore: page < totalPages,
+    })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }

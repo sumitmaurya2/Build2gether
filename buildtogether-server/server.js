@@ -3,6 +3,7 @@ const mongoose = require("mongoose")
 const cors = require("cors")
 const http = require("http")
 const helmet = require("helmet")
+const compression = require("compression")
 const { Server } = require("socket.io")
 require("dotenv").config()
 
@@ -60,6 +61,8 @@ app.use(cors({
   methods: ["GET", "POST", "PATCH", "DELETE"],
 }))
 app.use(helmet())
+// Enable gzip/Brotli compression for responses to reduce payload sizes.
+app.use(compression())
 app.use(express.json())
 
 // Used by the hosting provider to decide whether this instance is ready to receive traffic.
@@ -74,13 +77,13 @@ app.use("/api/messages", messageRoutes)
 app.use("/api/dm", directMessageRoutes)
 app.use("/api/notifications", notificationRoutes)
 
+const { verifyIdTokenCached } = require("./middleware/auth")
+
 async function verifySocketToken(token) {
-  if (!token) {
-    return null
-  }
+  if (!token) return null
 
   try {
-    const decodedToken = await admin.auth().verifyIdToken(token, true)
+    const decodedToken = await verifyIdTokenCached(token)
     const ageSeconds = Math.floor(Date.now() / 1000) - decodedToken.auth_time
     return ageSeconds <= SESSION_MAX_AGE_SECONDS ? decodedToken : null
   } catch {

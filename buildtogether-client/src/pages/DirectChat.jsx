@@ -3,11 +3,9 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { getUser } from "../api/users"
 import { getConversation } from "../api/directMessages"
-import { io } from "socket.io-client"
-import { BASE_URL, SOCKET_URL } from "../api/config"
+import { socket, connectSocket } from "../api/socket"
+import { BASE_URL } from "../api/config"
 import { apiFetch, getAuthToken } from "../api/request"
-
-const socket = io(SOCKET_URL)
 
 export default function DirectChat() {
   const { receiverUid } = useParams()
@@ -31,6 +29,13 @@ export default function DirectChat() {
       setReceiverData(receiver)
 
       const rid = [currentUser._id, receiver._id].sort().join("_")
+
+      try {
+        await connectSocket()
+      } catch (err) {
+        console.error("Socket connect failed", err)
+      }
+
       const token = await getAuthToken()
       socket.emit("join_dm", {
         roomId: rid,
@@ -38,7 +43,7 @@ export default function DirectChat() {
         token,
       })
 
-      const convo = await getConversation(user.uid, receiverUid)
+      const convo = await getConversation(user.uid, receiverUid, 1, 100)
       setMessages(convo.messages || [])
     } catch (error) {
       console.log(error.message)
